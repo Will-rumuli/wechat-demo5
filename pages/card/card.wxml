@@ -1,0 +1,80 @@
+<view class="page">
+  <scroll-view class="scroll" scroll-y show-scrollbar="{{false}}">
+    <view class="hint">拍摄或选图后可以拖动四个圆点贴合证件四角，系统会按你框选的范围矫正到标准比例</view>
+
+    <view class="types">
+      <view
+        class="chip {{index === presetIndex ? 'chip-on' : ''}}"
+        wx:for="{{presets}}"
+        wx:key="key"
+        data-index="{{index}}"
+        bindtap="onPickPreset"
+      >{{item.label}}</view>
+    </view>
+
+    <view class="slots">
+      <view
+        class="slot {{item.path ? '' : 'empty'}}"
+        wx:for="{{slots}}"
+        wx:key="key"
+        data-index="{{index}}"
+        bindtap="onPickSlot"
+      >
+        <image class="slot-img" wx:if="{{item.path}}" src="{{item.path}}" mode="aspectFill"></image>
+        <block wx:else>
+          <view class="slot-plus">+</view>
+          <view class="slot-hint">点击拍摄或选图</view>
+        </block>
+        <view class="slot-label">{{item.label}}{{item.path ? ' · 点击可重拍' : ''}}</view>
+      </view>
+    </view>
+
+    <view class="note">拍一张就能生成；两张都拍时会合成在同一页 A4 上（正面在上、反面在下），可直接打印或存档</view>
+    <view class="safe-bottom"></view>
+  </scroll-view>
+
+  <view class="bar">
+    <text class="bar-count">{{readyCount}} / 2 已就绪</text>
+    <button
+      class="btn primary {{readyCount < 1 || busy ? 'disabled' : ''}}"
+      bindtap="onCompose"
+      disabled="{{busy || readyCount < 1}}"
+    >生成一页</button>
+  </view>
+
+  <canvas type="2d" id="cv" class="cv"></canvas>
+
+  <view class="adj" wx:if="{{adjVisible}}" catchtouchmove="noop">
+    <view class="adj-head">拖动四个圆点到证件的四个角</view>
+    <view class="adj-stage" id="adjStage">
+      <image
+        class="adj-img"
+        src="{{adjPath}}"
+        mode="scaleToFill"
+        style="left:{{adjRect.left}}px;top:{{adjRect.top}}px;width:{{adjRect.w}}px;height:{{adjRect.h}}px"
+      ></image>
+      <view
+        class="adj-line"
+        wx:for="{{adjLines}}"
+        wx:key="idx"
+        style="left:{{item.x}}px;top:{{item.y}}px;width:{{item.w}}px;transform:rotate({{item.rot}}deg)"
+      ></view>
+      <view
+        class="adj-dot"
+        wx:for="{{adjDots}}"
+        wx:key="idx"
+        style="left:{{item.x}}px;top:{{item.y}}px"
+        data-i="{{item.idx}}"
+        catchtouchstart="onAdjStart"
+        catchtouchmove="onAdjMove"
+        catchtouchend="onAdjEnd"
+        catchtouchcancel="onAdjEnd"
+      ></view>
+    </view>
+    <view class="adj-foot">
+      <view class="adj-btn" bindtap="onAdjRedetect">重新识别</view>
+      <view class="adj-btn" bindtap="onAdjCancel">取消</view>
+      <view class="adj-btn main" bindtap="onAdjConfirm">确定</view>
+    </view>
+  </view>
+</view>

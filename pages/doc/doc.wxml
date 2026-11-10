@@ -1,0 +1,138 @@
+<view class="page">
+  <view class="head">
+    <view class="head-main">
+      <text class="head-title">{{docName}}</text>
+    </view>
+    <view class="head-actions">
+      <text class="link" bindtap="onRename">重命名</text>
+      <text class="head-count">共 {{pages.length}} 页</text>
+    </view>
+  </view>
+
+  <view class="pdfbar" wx:if="{{lastPdf}}">
+    <view class="pdfbar-main">
+      <text class="pdfbar-title">PDF 已生成</text>
+      <text class="pdfbar-sub">可直接打开或转发到聊天</text>
+    </view>
+    <view class="pdfbar-actions">
+      <text class="link" bindtap="onOpenLast">打开</text>
+      <text class="link" bindtap="onSharePdf">发送</text>
+    </view>
+  </view>
+
+  <scroll-view class="scroll" scroll-y="{{!dragging}}" show-scrollbar="{{false}}">
+    <view class="empty" wx:if="{{!pages.length}}">
+      <view class="empty-title">这一册还是空的</view>
+      <view class="empty-desc">适用于合同、票据、证件、书本内页、白板</view>
+      <view class="empty-actions">
+        <view class="action primary" bindtap="onCamera">拍照扫描</view>
+        <view class="action secondary" bindtap="onAlbum">从相册选择</view>
+        <view class="action secondary" bindtap="openCard">证件专用（正反面合成一页）</view>
+
+      </view>
+    </view>
+
+    <block wx:else>
+      <view class="grid">
+        <view
+          class="page-card {{item.checked ? 'checked' : ''}} {{dragging && dragIndex === index ? 'dragging' : ''}}"
+          wx:for="{{pages}}"
+          wx:key="id"
+          data-index="{{index}}"
+          bindtap="onTapPage"
+          bindlongpress="onDragStart"
+          bindtouchmove="onDragMove"
+          bindtouchend="onDragEnd"
+          bindtouchcancel="onDragEnd"
+        >
+          <image class="thumb" src="{{item.out}}" mode="aspectFill" lazy-load></image>
+          <view class="card-no" wx:if="{{!editing}}">{{index + 1}}</view>
+          <view class="card-check" wx:if="{{editing}}">{{item.checked ? '✓' : ''}}</view>
+          <view class="card-foot">{{item.filterLabel}}</view>
+        </view>
+
+        <view class="page-add" wx:if="{{!editing}}" bindtap="onAdd">
+          <view class="add-plus">+</view>
+          <view class="add-text">继续添加</view>
+        </view>
+      </view>
+
+      <view class="tip">
+        <text class="tip-text" wx:if="{{editing}}">点击页面勾选，可批量删除</text>
+        <text class="tip-text" wx:else>长按页面可拖动排序，点「管理」批量删除</text>
+      </view>
+    </block>
+    <view class="safe-bottom"></view>
+  </scroll-view>
+
+  <view class="bar">
+    <block wx:if="{{!editing}}">
+      <view class="bar-meta">
+        <text class="bar-count">共 {{pages.length}} 页</text>
+      </view>
+      <view class="bar-actions">
+        <button class="btn ghost" wx:if="{{pages.length}}" bindtap="onManage">管理</button>
+        <button class="btn primary" bindtap="onExport" disabled="{{exporting}}">生成 PDF</button>
+      </view>
+    </block>
+    <block wx:else>
+      <view class="bar-actions full">
+        <button class="btn ghost" bindtap="onSelectAll">{{selectedCount === pages.length ? '取消全选' : '全选'}}</button>
+        <button class="btn danger" bindtap="onDeleteSelected">删除{{selectedCount ? ' ' + selectedCount : ''}}</button>
+        <button class="btn ghost" bindtap="onExitManage">完成</button>
+      </view>
+    </block>
+  </view>
+
+  <view class="drag-ghost" wx:if="{{ghost}}" style="left:{{ghost.x}}px;top:{{ghost.y}}px;width:{{ghost.w}}px;height:{{ghost.h}}px">
+    <image class="drag-ghost-img" src="{{ghost.src}}" mode="aspectFill"></image>
+  </view>
+
+  <view class="mask" wx:if="{{showExport}}" bindtap="onCloseExport" catchtouchmove="noop"></view>
+  <view class="sheet" wx:if="{{showExport}}">
+    <view class="sheet-head">
+      <text class="sheet-title">导出 PDF</text>
+      <text class="sheet-close" bindtap="onCloseExport">关闭</text>
+    </view>
+
+    <view class="row">
+      <text class="row-label">页面尺寸</text>
+      <view class="chips">
+        <view class="chip {{opt.size === 'a4' ? 'chip-on' : ''}}" data-key="a4" bindtap="onPickSize">A4 纸张</view>
+        <view class="chip {{opt.size === 'fit' ? 'chip-on' : ''}}" data-key="fit" bindtap="onPickSize">原始比例</view>
+      </view>
+    </view>
+
+    <view class="row">
+      <text class="row-label">清晰度</text>
+      <view class="chips">
+        <view class="chip {{opt.quality === 'high' ? 'chip-on' : ''}}" data-key="high" bindtap="onPickQuality">高清</view>
+        <view class="chip {{opt.quality === 'normal' ? 'chip-on' : ''}}" data-key="normal" bindtap="onPickQuality">均衡</view>
+        <view class="chip {{opt.quality === 'low' ? 'chip-on' : ''}}" data-key="low" bindtap="onPickQuality">省流量</view>
+      </view>
+    </view>
+
+    <view class="row">
+      <text class="row-label">显示页码</text>
+      <switch checked="{{opt.pageNo}}" color="#2f7bff" bindchange="onTogglePageNo" />
+    </view>
+
+    <view class="row">
+      <text class="row-label">文件名</text>
+      <input
+        class="input"
+        value="{{opt.fileName}}"
+        placeholder="扫描册"
+        maxlength="40"
+        bindinput="onFileName"
+      />
+    </view>
+
+    <view class="sheet-actions">
+      <button class="btn ghost" bindtap="onCloseExport">取消</button>
+      <button class="btn primary" bindtap="onStartExport">开始生成</button>
+    </view>
+  </view>
+
+  <canvas type="2d" id="packer" class="packer" wx:if="{{exporting}}"></canvas>
+</view>

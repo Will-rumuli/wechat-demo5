@@ -1,0 +1,9 @@
+{
+  "desc": "扫描件属于本地私密内容，不参与微信搜索索引，详见 https://developers.weixin.qq.com/miniprogram/dev/framework/sitemap.html",
+  "rules": [
+    {
+      "action": "disallow",
+      "page": "*"
+    }
+  ]
+}

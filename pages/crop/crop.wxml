@@ -1,0 +1,102 @@
+<view class="page">
+  <view class="topbar">
+    <text class="topbar-title">{{step === 'crop' ? '拖圆点调角 · 点选框可删除' : '确认矫正效果'}}</text>
+    <text class="topbar-count" wx:if="{{pageInfo}}">{{pageInfo}}</text>
+  </view>
+
+  <view class="stage" id="stage">
+    <block wx:if="{{step === 'crop'}}">
+      <view
+        class="photo"
+        style="left:{{rect.left}}px;top:{{rect.top}}px;width:{{rect.w}}px;height:{{rect.h}}px"
+      >
+        <image class="photo-img" src="{{imgPath}}" mode="scaleToFill" style="filter:{{cssFilter}}"></image>
+      </view>
+
+      <block wx:for="{{hitBoxes}}" wx:key="id" wx:for-item="box">
+        <view
+          class="box-hit {{box.active ? 'box-hit-on' : ''}}"
+          data-box="{{box.id}}"
+          style="left:{{box.hitLeft}}px;top:{{box.hitTop}}px;width:{{box.hitW}}px;height:{{box.hitH}}px"
+          catchtap="onBoxTap"
+        ></view>
+      </block>
+
+      <block wx:for="{{boxes}}" wx:key="id" wx:for-item="box">
+        <view
+          class="seg {{box.active ? 'seg-on' : ''}}"
+          wx:for="{{box.lines}}"
+          wx:key="idx"
+          wx:for-item="seg"
+          style="left:{{seg.x}}px;top:{{seg.y}}px;width:{{seg.w}}px;transform:rotate({{seg.rot}}deg)"
+        ></view>
+      </block>
+
+      <block wx:for="{{boxes}}" wx:key="id" wx:for-item="box">
+        <view
+          class="handle"
+          wx:for="{{box.quad}}"
+          wx:key="idx"
+          wx:for-item="pt"
+          wx:for-index="ci"
+          data-box="{{box.id}}"
+          data-i="{{ci}}"
+          style="left:{{pt.x}}px;top:{{pt.y}}px"
+          catchtouchstart="onCornerStart"
+          catchtouchmove="onCornerMove"
+          catchtouchend="onCornerEnd"
+          catchtouchcancel="onCornerEnd"
+        >
+          <view class="dot {{box.active ? 'dot-on' : ''}}"></view>
+        </view>
+      </block>
+
+      <block wx:for="{{boxes}}" wx:key="id" wx:for-item="box">
+        <view
+          wx:if="{{box.active}}"
+          class="box-del"
+          data-box="{{box.id}}"
+          catchtap="onDeleteBox"
+          style="left:{{box.delLeft}}px;top:{{box.delTop}}px"
+        >×</view>
+      </block>
+    </block>
+
+    <block wx:else>
+      <scroll-view class="preview-list" scroll-y>
+        <view class="preview-item" wx:for="{{previews}}" wx:key="path">
+          <view class="preview-no">第 {{index + 1}} 张</view>
+          <image class="preview-img" src="{{item.path}}" mode="widthFix"></image>
+        </view>
+      </scroll-view>
+    </block>
+  </view>
+
+  <view class="panel">
+    <scroll-view class="chips" scroll-x>
+      <view
+        class="chip {{filter === item.key ? 'chip-on' : ''}}"
+        wx:for="{{filters}}"
+        wx:key="key"
+        data-key="{{item.key}}"
+        bindtap="onFilter"
+      >{{item.label}}</view>
+    </scroll-view>
+    <view class="actions">
+      <block wx:if="{{step === 'crop'}}">
+        <button class="btn ghost small" bindtap="onAddBox" disabled="{{busy}}">加框</button>
+        <button class="btn ghost small" bindtap="onAuto" disabled="{{busy}}">自动识别</button>
+        <button class="btn ghost small" bindtap="onRotate" disabled="{{busy}}">旋转</button>
+        <button class="btn ghost small" bindtap="onReset" disabled="{{busy}}">重置</button>
+        <button class="btn primary" bindtap="onProcess" disabled="{{busy}}">下一步</button>
+      </block>
+      <block wx:else>
+        <button class="btn ghost" bindtap="onBackToCrop">重新调整</button>
+        <button class="btn primary" bindtap="onConfirm" disabled="{{busy}}">{{doneText}}</button>
+      </block>
+    </view>
+  </view>
+
+  <canvas type="2d" id="work" class="work"></canvas>
+  <canvas type="2d" id="probe" class="work"></canvas>
+</view>

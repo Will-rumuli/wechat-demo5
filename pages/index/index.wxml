@@ -1,0 +1,68 @@
+<view class="page">
+  <scroll-view class="scroll" scroll-y show-scrollbar="{{false}}">
+    <view class="hero">
+      <view class="hero-title">把纸上的东西变成 PDF</view>
+      <view class="hero-desc">每一册独立归档，拍照 → 矫正增强 → 导出无水印 PDF</view>
+      <view class="hero-tags">
+        <text class="tag">本地处理</text>
+        <text class="tag">无水印</text>
+        <text class="tag">多册管理</text>
+      </view>
+    </view>
+
+    <view class="empty" wx:if="{{!docs.length}}">
+      <view class="empty-title">还没有扫描册</view>
+      <view class="empty-desc">新建一册，把合同、票据、证件按册整理</view>
+      <view class="empty-actions">
+        <view class="action primary" bindtap="onCreate">新建扫描册</view>
+      </view>
+    </view>
+
+    <block wx:else>
+      <view class="search">
+        <input
+          class="search-input"
+          value="{{keyword}}"
+          placeholder="搜索扫描册名称"
+          placeholder-class="search-ph"
+          confirm-type="search"
+          bindinput="onSearch"
+        />
+        <text class="search-clear" wx:if="{{keyword}}" bindtap="onClearSearch">清空</text>
+      </view>
+
+      <view class="no-result" wx:if="{{!groups.length}}">没有找到相关扫描册</view>
+
+      <view class="docs" wx:else>
+        <block wx:for="{{groups}}" wx:key="month" wx:for-item="group">
+          <view class="group-title">{{group.label}}</view>
+          <view
+            class="doc"
+            wx:for="{{group.docs}}"
+            wx:key="id"
+            wx:for-item="item"
+            data-id="{{item.id}}"
+            bindtap="onOpen"
+          >
+            <view class="doc-cover" wx:if="{{item.cover}}">
+              <image class="doc-cover-img" src="{{item.cover}}" mode="aspectFill" lazy-load></image>
+            </view>
+            <view class="doc-cover blank" wx:else>空册</view>
+            <view class="doc-main">
+              <text class="doc-name">{{item.name}}</text>
+              <text class="doc-meta">{{item.count}} 页 · {{item.timeText}}</text>
+            </view>
+            <view class="doc-more" data-id="{{item.id}}" catchtap="onMore">···</view>
+          </view>
+        </block>
+
+        <view class="doc-add" bindtap="onCreate">＋ 新建扫描册</view>
+      </view>
+
+      <view class="tip" wx:if="{{!keyword}}">
+        <text class="tip-text">点「···」可重命名或删除整册</text>
+      </view>
+    </block>
+    <view class="safe-bottom"></view>
+  </scroll-view>
+</view>
